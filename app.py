@@ -1,7 +1,6 @@
 import streamlit as st
 import hashlib
-import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Block structure for blockchain
 class Block:
@@ -18,23 +17,21 @@ class Block:
         return sha.hexdigest()
 
 # Blockchain structure
-# Cấu trúc Blockchain
 class Blockchain:
     def __init__(self):
         self.chain = [self.create_genesis_block()]
 
     def create_genesis_block(self):
-        # Dùng dictionary để đồng bộ dữ liệu
-        return Block(0, str(datetime.utcnow()), {"user": "Genesis", "message": "Genesis Block"}, "0")
+        # Use dictionary to synchronize data structure
+        return Block(0, str(datetime.now(timezone.utc)), {"user": "Genesis", "message": "Genesis Block"}, "0")
 
     def get_latest_block(self):
         return self.chain[-1]
 
     def add_block(self, data):
         latest_block = self.get_latest_block()
-        new_block = Block(len(self.chain), str(datetime.utcnow()), data, latest_block.hash)
+        new_block = Block(len(self.chain), str(datetime.now(timezone.utc)), data, latest_block.hash)
         self.chain.append(new_block)
-
 
 # Initialize blockchain
 blockchain = Blockchain()
@@ -46,8 +43,12 @@ st.write("### Chat History (stored on blockchain)")
 
 # Display all messages in blockchain
 for block in blockchain.chain:
-    st.write(f"**User**: {block.data.get('user', 'N/A')}")
-    st.write(f"**Message**: {block.data.get('message', '')}")
+    if isinstance(block.data, dict):  # Ensure data is a dictionary
+        st.write(f"**User**: {block.data.get('user', 'N/A')}")
+        st.write(f"**Message**: {block.data.get('message', '')}")
+    else:
+        st.write(f"**User**: N/A")
+        st.write(f"**Message**: {block.data}")
     st.write(f"**Timestamp**: {block.timestamp}")
     st.write(f"**Hash**: `{block.hash}`")
     st.write("---")
@@ -65,4 +66,3 @@ if st.button("Send"):
         st.experimental_rerun()  # Refresh to show the new message
     else:
         st.error("Please enter both your name and message.")
-
